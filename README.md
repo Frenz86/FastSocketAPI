@@ -9,6 +9,6 @@
 ### Option with browser Client:
 2) send the streaming of webbrowser whuch access to personal camera
     - start FASTSocketAPI server main.py
-    - to to localhost:8000/
+    - go to localhost:8000/
     - push start button
 
