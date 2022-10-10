@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Streamer</title>
+</head>
+
+<body>
+<div>
+    <button id="stop">Stop</button>
+    <button id="start">Start</button>
+    <label for="cam1Trig">Cam1</label>
+    <input id="cam1Trig" type="checkbox" name="cam1Trig" checked>
+    <label for="cam2Trig">Cam2</label>
+    <input id="cam2Trig" type="checkbox" name="cam2Trig" checked>
+</div>
+<div>
+    <video autoplay id="cam1"></video>
+    <img id="cam2" src="">
+</div>
+<script>
+    // get video dom element
+    const video = document.querySelector('video');
+    let sendVideo = false;
+    document.getElementById("stop").onclick = () => sendVideo = false
+    document.getElementById("start").onclick = () => sendVideo = true
+    document.getElementById("cam1Trig").onclick = (e) => document.getElementById("cam1").style.display = e.target.checked ? "block":"none"
+    document.getElementById("cam2Trig").onclick = (e) => document.getElementById("cam2").style.display = e.target.checked ? "block":"none"
+    // request access to webcam
+    navigator.mediaDevices.getUserMedia({video: {width: 640, height: 400}}).then((stream) => video.srcObject = stream);
+
+    // returns a frame encoded in base64
+    const getFrame = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        canvas.getContext('2d').drawImage(video, 0, 0);
+        const data = canvas.toDataURL('image/png').split(';base64,')[1];
+        return data;
+    }
+    const WS_URL = 'ws://127.0.0.1:8000/complete';
+    const FPS = 9;
+    const ws = new WebSocket(WS_URL);
+    //ws.binaryType = "arraybuffer";
+    ws.onopen = () => {
+        console.log(`Connected to ${WS_URL}`);
+        setInterval(() => {
+            if (sendVideo) {
+                const data = getFrame()
+                if (data && data.length > 0)
+                    ws.send(data);
+            }
+        }, 1000 / FPS);
+    }
+    let image = document.getElementById("cam2");
+    image.onload = function () {
+        URL.revokeObjectURL(this.src); // release the blob URL once the image is loaded
+    }
+    ws.onmessage = function (event) {
+        if (typeof event.data === 'string')
+            document.getElementById("textArea").innerHTML = event.data;
+        else
+            image.src = URL.createObjectURL(event.data);
+    };
+</script>
+</body>
+</html>
