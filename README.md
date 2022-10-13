@@ -12,3 +12,6 @@
     - go to localhost:8000/
     - push start button
 
+
+### Streamlit implementation
+1) streamlit run app.py --  still not working on browser
